@@ -1,5 +1,5 @@
 {
-  "name": "ytake/laravel-aspect",
+  "name": "jonas/laravel-aspect",
   "description": "Aspect Oriented Programming library for laravel framework, and lumen",
   "minimum-stability": "stable",
   "license": "MIT",
