@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -20,17 +21,19 @@ declare(strict_types=1);
 namespace Ytake\LaravelAspect\Annotation;
 
 use Doctrine\Common\Annotations\Annotation;
+use Illuminate\Database\QueryException;
 
 /**
  * Class Transactional
+ *
  * @Annotation
  * @Target("METHOD")
  */
 class Transactional extends Annotation
 {
-    /** @var null|string|array $value  database connection names */
+    /** @var null|string|array $value database connection names */
     public $value = null;
 
-    /** @var string  */
+    /** @var string */
     public $expect = 'Illuminate\Database\QueryException';
 }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -32,7 +33,7 @@ final class ContainerInterceptor
     private $container;
 
     /**
-     * @param Container     $container
+     * @param Container $container
      */
     public function __construct(Container $container)
     {
@@ -41,7 +42,7 @@ final class ContainerInterceptor
 
     /**
      * @param string $abstract
-     * @param BindInterface   $bind
+     * @param BindInterface $bind
      * @param string $className
      *
      * @return bool

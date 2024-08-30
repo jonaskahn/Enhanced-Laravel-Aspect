@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -19,6 +20,7 @@ declare(strict_types=1);
 
 namespace Ytake\LaravelAspect\Interceptor;
 
+use Exception;
 use Illuminate\Contracts\Events\Dispatcher as EventDispatcher;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Log\LogManager;
@@ -26,7 +28,6 @@ use Ray\Aop\MethodInterceptor;
 use Ray\Aop\MethodInvocation;
 use Ytake\LaravelAspect\Annotation\AnnotationReaderTrait;
 use Ytake\LaravelAspect\Annotation\QueryLog;
-
 use function is_null;
 use function sprintf;
 
@@ -47,20 +48,19 @@ class QueryLogInterceptor extends AbstractLogger implements MethodInterceptor
      * @param MethodInvocation $invocation
      *
      * @return object
-     * @throws \Exception
+     * @throws Exception
      */
     public function invoke(MethodInvocation $invocation)
     {
-        /** @var \Ytake\LaravelAspect\Annotation\QueryLog $annotation */
+        /** @var QueryLog $annotation */
         $annotation = $invocation->getMethod()->getAnnotation($this->annotation) ?? new $this->annotation([]);
         $this->subscribeQueryLog();
         $result = $invocation->proceed();
         $logFormat = $this->queryLogFormatter($annotation, $invocation);
         $logger = static::$logger;
+        $driver = $annotation->driver ?? env('LOG_CHANNEL', 'stderr');
         if ($logger instanceof LogManager) {
-            if (!is_null($annotation->driver)) {
-                $logger = $logger->driver($annotation->driver);
-            }
+            $logger = $logger->driver($driver);
             $logger->addRecord($logFormat['level'], $logFormat['message'], $logFormat['context']);
         }
         $this->queryLogs = [];
@@ -72,26 +72,27 @@ class QueryLogInterceptor extends AbstractLogger implements MethodInterceptor
     {
         static::$dispatcher->listen(QueryExecuted::class, function (QueryExecuted $executed) {
             $this->queryLogs[] = [
-                'query'          => $executed->sql,
-                'bindings'       => $executed->bindings,
-                'time'           => $executed->time,
+                'query' => $executed->sql,
+                'bindings' => $executed->bindings,
+                'time' => $executed->time,
                 'connectionName' => $executed->connectionName,
             ];
         });
     }
 
     /**
-     * @param QueryLog         $annotation
+     * @param QueryLog $annotation
      * @param MethodInvocation $invocation
      *
      * @return array
      */
     protected function queryLogFormatter(
-        QueryLog $annotation,
+        QueryLog         $annotation,
         MethodInvocation $invocation
-    ): array {
+    ): array
+    {
         return [
-            'level'   => $annotation->value,
+            'level' => $annotation->value,
             'message' => sprintf(
                 $this->format,
                 $annotation->name,

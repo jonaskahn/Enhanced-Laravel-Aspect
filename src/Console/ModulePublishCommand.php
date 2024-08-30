@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -19,13 +20,15 @@ declare(strict_types=1);
 
 namespace Ytake\LaravelAspect\Console;
 
-use Illuminate\Support\Str;
 use Illuminate\Console\Command;
+use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Str;
+use ReflectionClass;
+use ReflectionException;
 use Symfony\Component\Console\Input\InputArgument;
-
-use function trim;
 use function str_replace;
+use function trim;
 
 /**
  * Class ModulePublishCommand
@@ -48,15 +51,15 @@ class ModulePublishCommand extends Command
 
     /** @var array  package modules */
     protected $modules = [
-        'CacheableModule'      => 'Ytake\LaravelAspect\Modules\CacheableModule',
-        'CacheEvictModule'     => 'Ytake\LaravelAspect\Modules\CacheEvictModule',
-        'CachePutModule'       => 'Ytake\LaravelAspect\Modules\CachePutModule',
-        'TransactionalModule'  => 'Ytake\LaravelAspect\Modules\TransactionalModule',
-        'LoggableModule'       => 'Ytake\LaravelAspect\Modules\LoggableModule',
-        'LogExceptionsModule'  => 'Ytake\LaravelAspect\Modules\LogExceptionsModule',
+        'CacheableModule' => 'Ytake\LaravelAspect\Modules\CacheableModule',
+        'CacheEvictModule' => 'Ytake\LaravelAspect\Modules\CacheEvictModule',
+        'CachePutModule' => 'Ytake\LaravelAspect\Modules\CachePutModule',
+        'TransactionalModule' => 'Ytake\LaravelAspect\Modules\TransactionalModule',
+        'LoggableModule' => 'Ytake\LaravelAspect\Modules\LoggableModule',
+        'LogExceptionsModule' => 'Ytake\LaravelAspect\Modules\LogExceptionsModule',
         'RetryOnFailureModule' => 'Ytake\LaravelAspect\Modules\RetryOnFailureModule',
-        'MessageDrivenModule'  => 'Ytake\LaravelAspect\Modules\MessageDrivenModule',
-        'QueryLogModule'       => 'Ytake\LaravelAspect\Modules\QueryLogModule',
+        'MessageDrivenModule' => 'Ytake\LaravelAspect\Modules\MessageDrivenModule',
+        'QueryLogModule' => 'Ytake\LaravelAspect\Modules\QueryLogModule',
     ];
 
     /**
@@ -69,8 +72,8 @@ class ModulePublishCommand extends Command
     }
 
     /**
-     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
-     * @throws \ReflectionException
+     * @throws FileNotFoundException
+     * @throws ReflectionException
      */
     public function handle(): void
     {
@@ -104,16 +107,6 @@ class ModulePublishCommand extends Command
     }
 
     /**
-     * @return array
-     */
-    protected function getArguments()
-    {
-        return [
-            ['module_dir', InputArgument::OPTIONAL, 'The name of the class directory', $this->classPath],
-        ];
-    }
-
-    /**
      * @param string $name
      *
      * @return string
@@ -128,7 +121,7 @@ class ModulePublishCommand extends Command
     /**
      * Parse the name and format according to the root namespace.
      *
-     * @param string      $name
+     * @param string $name
      * @param string|null $moduleDirectory
      *
      * @return string
@@ -151,6 +144,51 @@ class ModulePublishCommand extends Command
     }
 
     /**
+     * @return string
+     */
+    protected function stub(): string
+    {
+        /** module stub file path */
+        return __DIR__ . '/stub/ModuleStub.stub';
+    }
+
+    /**
+     * @param string $module
+     *
+     * @return string
+     * @throws ReflectionException
+     */
+    protected function getExtendsClassName(string $module): string
+    {
+        $shortName = (new ReflectionClass($module))->getShortName();
+        $extendClassName = "Package{$shortName}";
+
+        return $extendClassName;
+    }
+
+    /**
+     * Build the directory for the class if necessary.
+     *
+     * @param string $path
+     */
+    protected function makeDirectory(string $path): void
+    {
+        if (!$this->filesystem->isDirectory(dirname($path))) {
+            $this->filesystem->makeDirectory(dirname($path), 0777, true, true);
+        }
+    }
+
+    /**
+     * @return array
+     */
+    protected function getArguments()
+    {
+        return [
+            ['module_dir', InputArgument::OPTIONAL, 'The name of the class directory', $this->classPath],
+        ];
+    }
+
+    /**
      * added custom aspect module, override package modules
      *
      * @param string $module
@@ -162,40 +200,5 @@ class ModulePublishCommand extends Command
         $this->modules[$module];
 
         return $this;
-    }
-
-    /**
-     * Build the directory for the class if necessary.
-     *
-     * @param  string $path
-     */
-    protected function makeDirectory(string $path): void
-    {
-        if (!$this->filesystem->isDirectory(dirname($path))) {
-            $this->filesystem->makeDirectory(dirname($path), 0777, true, true);
-        }
-    }
-
-    /**
-     * @param string $module
-     *
-     * @return string
-     * @throws \ReflectionException
-     */
-    protected function getExtendsClassName(string $module): string
-    {
-        $shortName = (new \ReflectionClass($module))->getShortName();
-        $extendClassName = "Package{$shortName}";
-
-        return $extendClassName;
-    }
-
-    /**
-     * @return string
-     */
-    protected function stub(): string
-    {
-        /** module stub file path */
-        return __DIR__ . '/stub/ModuleStub.stub';
     }
 }

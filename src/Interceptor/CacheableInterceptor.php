@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -19,9 +20,9 @@ declare(strict_types=1);
 
 namespace Ytake\LaravelAspect\Interceptor;
 
+use Psr\SimpleCache\InvalidArgumentException;
 use Ray\Aop\MethodInvocation;
 use Ytake\LaravelAspect\Annotation\Cacheable;
-
 use function is_array;
 use function is_null;
 
@@ -32,8 +33,9 @@ class CacheableInterceptor extends AbstractCache
 {
     /**
      * @param MethodInvocation $invocation
+     *
      * @return mixed
-     * @throws \Psr\SimpleCache\InvalidArgumentException
+     * @throws InvalidArgumentException
      */
     public function invoke(MethodInvocation $invocation)
     {

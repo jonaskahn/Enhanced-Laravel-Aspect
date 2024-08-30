@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 /**
@@ -35,7 +36,7 @@ class TransactionalPointCut extends CommonPointCut implements PointCutable
     /**
      * @param Container $app
      *
-     * @return \Ray\Aop\Pointcut
+     * @return Pointcut
      */
     public function configure(Container $app): Pointcut
     {
